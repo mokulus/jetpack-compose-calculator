@@ -120,7 +120,7 @@ class Parser(val lexemes: List<Lexeme>, val useDegrees : Boolean = false) {
                 val rhs = operatorExpression(depth + 1)
                 expr = op.apply(expr, rhs)
             } else {
-                val rhs = operatorExpression(depth)
+                val rhs = operatorExpression(BinaryOperator.precedence.size - 1)
                 expr = op.apply(expr, rhs)
             }
             if (position == lexemes.size)
