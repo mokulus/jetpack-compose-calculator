@@ -1,7 +1,6 @@
 package com.mokulus.calculator
 
 import android.icu.text.DecimalFormat
-import android.icu.text.UnicodeSet
 
 class InvalidLexeme(val position: Int, val char: Char) : Exception("Invalid lexeme at ${position}: $char")
 
@@ -10,8 +9,7 @@ class Lexer(var text: String) {
     init {
         text = text.filter { !it.isWhitespace() }
         val iter = text.withIndex().iterator()
-        UnicodeSet()
-        val nameRegex = Regex("""\p{Alpha}+""")
+        val nameRegex = Regex("""\p{L}+""")
         val numberRegex = Regex("""[+-]?[0-9]+(\.[0-9]*)?""")
         while (iter.hasNext()) {
             val (i, c) = iter.next()
