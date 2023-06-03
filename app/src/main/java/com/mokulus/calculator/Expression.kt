@@ -10,17 +10,9 @@ class NumberExpression(private val value : Double) : Expression() {
     }
 }
 
-enum class ConstantType {
-    PI,
-    E
-}
-
-class ConstantExpression(val type : ConstantType) : Expression() {
+class ConstantExpression(val value : Double) : Expression() {
     override fun eval(): Double {
-        return when(type) {
-            ConstantType.PI -> kotlin.math.PI
-            ConstantType.E -> kotlin.math.E
-        }
+        return value
     }
 }
 

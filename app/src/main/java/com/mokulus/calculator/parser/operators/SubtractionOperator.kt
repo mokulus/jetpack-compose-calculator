@@ -1,4 +1,4 @@
-package com.mokulus.calculator.parser
+package com.mokulus.calculator.parser.operators
 
 import com.mokulus.calculator.BinaryExpression
 import com.mokulus.calculator.Expression

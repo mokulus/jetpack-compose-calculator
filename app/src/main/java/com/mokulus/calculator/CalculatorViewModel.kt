@@ -6,8 +6,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.mokulus.calculator.parser.Constant
 import com.mokulus.calculator.parser.Parser
 import com.mokulus.calculator.parser.ParserException
+import com.mokulus.calculator.parser.functions.Function
 
 class CalculatorViewModel : ViewModel() {
     var text : String by mutableStateOf("")
@@ -23,7 +25,7 @@ class CalculatorViewModel : ViewModel() {
     init {
         val decimalFormatSymbols = DecimalFormatSymbols()
         decimalFormatSymbols.groupingSeparator = ' '
-        decimalFormat = DecimalFormat("###,###,###,###,##0.######", decimalFormatSymbols)
+        decimalFormat = DecimalFormat("###,###,###,###,##0.#########", decimalFormatSymbols)
     }
 
     fun pushKey(digit : Int) {
@@ -37,7 +39,8 @@ class CalculatorViewModel : ViewModel() {
         pushRaw(".")
     }
 
-    fun pushOperator(operator: Operator) {
+    fun pushOperator(operatorType: OperatorType) {
+        val operator = Operator(operatorType.getSymbol(), text.length)
         if (lexer.getLexemes().isEmpty()) {
             if (operator.type == OperatorType.Minus) {
                 pushRaw(operator.text)
@@ -69,16 +72,19 @@ class CalculatorViewModel : ViewModel() {
         }
     }
 
-    fun pushName(name : Name) {
-        val last = getLastLexeme()
-        if (last != null && last is Name)
-            pop()
-        if (last == null || last !is Number)
-            pushRaw(name.text)
+    fun pushConstant(constant : Constant) {
+        pushName(Name(constant.text, text.length))
+    }
+
+    fun pushFunction(function : Function) {
+        pushName(Name(function.name, text.length))
+        pushLeftParen()
     }
 
     fun pushLeftParen() {
-        pushRaw("(")
+        val last = getLastLexeme()
+        if (last == null || last !is Number)
+            pushRaw("(")
     }
 
     fun pushRightParen() {
@@ -121,6 +127,14 @@ class CalculatorViewModel : ViewModel() {
 
     private fun getLastLexeme() : Lexeme? {
         return lexer.getLexemes().lastOrNull()
+    }
+
+    private fun pushName(name : Name) {
+        val last = getLastLexeme()
+        if (last != null && last is Name)
+            pop()
+        if (last == null || last !is Number)
+            pushRaw(name.text)
     }
 
     private fun pushRaw(raw : String) {

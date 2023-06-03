@@ -1,8 +1,7 @@
-package com.mokulus.calculator.parser
+package com.mokulus.calculator.parser.operators
 
 import com.mokulus.calculator.Expression
 import com.mokulus.calculator.OperatorType
-import java.lang.IllegalArgumentException
 
 sealed class UnaryPostfixOperator {
     abstract fun apply(expr : Expression) : Expression

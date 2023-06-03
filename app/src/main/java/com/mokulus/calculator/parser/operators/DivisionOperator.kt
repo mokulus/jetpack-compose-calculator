@@ -1,7 +1,8 @@
-package com.mokulus.calculator.parser
+package com.mokulus.calculator.parser.operators
 
 import com.mokulus.calculator.BinaryExpression
 import com.mokulus.calculator.Expression
+import com.mokulus.calculator.parser.DomainError
 
 class DivisionOperator : BinaryOperator() {
     override fun apply(left: Expression, right: Expression): Expression {

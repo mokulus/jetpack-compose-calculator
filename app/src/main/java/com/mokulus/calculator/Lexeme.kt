@@ -1,7 +1,5 @@
 package com.mokulus.calculator
 
-import java.lang.IllegalArgumentException
-
 sealed class Lexeme(open val text : String, open val position : Int) {}
 
 data class LeftParen(override val position: Int) : Lexeme("(", position)
@@ -21,21 +19,33 @@ enum class OperatorType {
     Divide,
     Percent,
     Factorial,
-    Power
+    Power;
+
+    fun getSymbol() : String {
+        return when (this) {
+            Plus -> "+"
+            Minus -> "-"
+            Multiply -> "×"
+            Divide -> "÷"
+            Percent -> "%"
+            Factorial -> "!"
+            Power -> "^"
+        }
+    }
 }
 
 data class Operator(override val text : String, override val position: Int) : Lexeme(text, position) {
     companion object {
-        val operators = listOf("+", "-", "*", "/", "%", "!", "^")
+        val operators = OperatorType.values().map { it.getSymbol() }
     }
-    val type : OperatorType = when (text) {
-        "+" -> OperatorType.Plus
-        "-" -> OperatorType.Minus
-        "*" -> OperatorType.Multiply
-        "/" -> OperatorType.Divide
-        "%" -> OperatorType.Percent
-        "!" -> OperatorType.Factorial
-        "^" -> OperatorType.Power
-        else -> throw IllegalArgumentException("Unknown operator ${text}")
+
+    val type : OperatorType
+    init {
+        val map = OperatorType.values().associateWith { it.getSymbol() }
+        val match = map.filter { it.value == text }.keys.firstOrNull()
+        if (match == null)
+            throw IllegalArgumentException("Unknown operator ${text}")
+        else
+            type = match
     }
 }

@@ -1,7 +1,5 @@
 package com.mokulus.calculator.parser
 
-import com.mokulus.calculator.ConstantExpression
-import com.mokulus.calculator.ConstantType
 import com.mokulus.calculator.Expression
 import com.mokulus.calculator.LeftParen
 import com.mokulus.calculator.Lexeme
@@ -12,6 +10,19 @@ import com.mokulus.calculator.Operator
 import com.mokulus.calculator.OperatorType
 import com.mokulus.calculator.RightParen
 import com.mokulus.calculator.UnaryExpression
+import com.mokulus.calculator.parser.functions.AcosFunction
+import com.mokulus.calculator.parser.functions.AsinFunction
+import com.mokulus.calculator.parser.functions.AtanFunction
+import com.mokulus.calculator.parser.functions.CosFunction
+import com.mokulus.calculator.parser.functions.ExpFunction
+import com.mokulus.calculator.parser.functions.Log10Function
+import com.mokulus.calculator.parser.functions.NaturalLogFunction
+import com.mokulus.calculator.parser.functions.SinFunction
+import com.mokulus.calculator.parser.functions.SquareRootFunction
+import com.mokulus.calculator.parser.functions.TanFunction
+import com.mokulus.calculator.parser.operators.Associativity
+import com.mokulus.calculator.parser.operators.BinaryOperator
+import com.mokulus.calculator.parser.operators.UnaryPostfixOperator
 
 abstract class ParserException(msg: String) : Exception(msg) {}
 
@@ -24,27 +35,21 @@ class DomainError(msg: String) : ParserException(msg)
 class Parser(val lexemes: List<Lexeme>, val useDegrees : Boolean = false) {
     val value = 0f
     var position = 0
-    private val degToRad = kotlin.math.PI / 180
-    private val radToDeg = 1 / degToRad
-    val funcMap = mapOf<String, (Double) -> Double>(
-        "sin" to if (!useDegrees) { { kotlin.math.sin(it) } } else { { kotlin.math.sin(degToRad * it) } },
-        "cos" to if (!useDegrees) { { kotlin.math.cos(it) } } else { { kotlin.math.cos(degToRad * it) } },
-        "tan" to if (!useDegrees) { { kotlin.math.tan(it) } } else { { kotlin.math.tan(degToRad * it) } },
 
-        "asin" to if (!useDegrees) { { kotlin.math.asin(it) } } else { { radToDeg * kotlin.math.asin(it) } },
-        "acos" to if (!useDegrees) { { kotlin.math.acos(it) } } else { { radToDeg * kotlin.math.acos(it) } },
-        "atan" to if (!useDegrees) { { kotlin.math.atan(it) } } else { { radToDeg * kotlin.math.atan(it) } },
-
-        "exp" to { kotlin.math.exp(it) },
-        "ln" to { kotlin.math.ln(it) },
-
-        "log" to { kotlin.math.log10(it) },
-
-        "sqrt" to { kotlin.math.sqrt(it) },
+    val funcionList = listOf(
+        SinFunction(useRadians = !useDegrees),
+        CosFunction(useRadians = !useDegrees),
+        TanFunction(useRadians = !useDegrees),
+        AsinFunction(useRadians = !useDegrees),
+        AcosFunction(useRadians = !useDegrees),
+        AtanFunction(useRadians = !useDegrees),
+        ExpFunction(),
+        NaturalLogFunction(),
+        Log10Function(),
+        SquareRootFunction()
     )
-    val variableMap = mapOf(
-        "pi" to ConstantType.PI,
-        "e" to ConstantType.E)
+
+    val constants = Constant.constants()
 
     private fun peek() : Lexeme? {
         if (lexemes.size != position)
@@ -72,13 +77,15 @@ class Parser(val lexemes: List<Lexeme>, val useDegrees : Boolean = false) {
         if (lexeme is Number) {
             ret = NumberExpression(lexeme.value)
         } else if (lexeme is Name) {
-            if (lexeme.text in funcMap.keys) {
+            if (lexeme.text in funcionList.map { it.name }) {
                 expect { it is LeftParen }
                 val expr = operatorExpression()
                 expect { it is RightParen }
-                ret =  UnaryExpression(funcMap[lexeme.text]!!, expr)
-            } else if (lexeme.text in variableMap.keys) {
-                ret = ConstantExpression(variableMap[lexeme.text]!!)
+                val function = funcionList.find { lexeme.text == it.name }!!
+                ret =  UnaryExpression({function.invoke(it)}, expr)
+            } else if (lexeme.text in constants.map { it.text }) {
+                val constant = constants.find { lexeme.text == it.text }!!
+                ret = constant.expression()
             } else
                 throw UnexpectedTokenException(lexeme)
         } else if (lexeme is LeftParen) {

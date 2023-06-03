@@ -37,6 +37,18 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mokulus.calculator.parser.EConstant
+import com.mokulus.calculator.parser.PiConstant
+import com.mokulus.calculator.parser.functions.AcosFunction
+import com.mokulus.calculator.parser.functions.AsinFunction
+import com.mokulus.calculator.parser.functions.AtanFunction
+import com.mokulus.calculator.parser.functions.CosFunction
+import com.mokulus.calculator.parser.functions.ExpFunction
+import com.mokulus.calculator.parser.functions.Log10Function
+import com.mokulus.calculator.parser.functions.NaturalLogFunction
+import com.mokulus.calculator.parser.functions.SinFunction
+import com.mokulus.calculator.parser.functions.SquareRootFunction
+import com.mokulus.calculator.parser.functions.TanFunction
 import com.mokulus.calculator.ui.theme.CalculatorTheme
 
 class MainActivity : ComponentActivity() {
@@ -134,15 +146,19 @@ fun BasicTab(
             NumpadButton(modifier = Modifier.weight(1f), onClick = { model.pop() }) {
                 Text("<", fontSize = fontSize)
             }
-            val operators = listOf('/', '*', '+', '-')
-            val onClick: (Char) -> (() -> Unit) = { c ->
+            val operators = listOf(
+                OperatorType.Divide,
+                OperatorType.Multiply,
+                OperatorType.Plus,
+                OperatorType.Minus)
+            val onClick: (OperatorType) -> (() -> Unit) = { op ->
                 {
-                    model.pushOperator(Operator(c.toString(), text.length))
+                    model.pushOperator(op)
                 }
             }
-            for (char in operators) {
-                NumpadButton(modifier = Modifier.weight(1f), onClick = onClick(char)) {
-                    Text(char.toString(), fontSize = fontSize)
+            for (op in operators) {
+                NumpadButton(modifier = Modifier.weight(1f), onClick = onClick(op)) {
+                    Text(op.getSymbol(), fontSize = fontSize)
                 }
             }
         }
@@ -172,62 +188,75 @@ fun AdvancedTab(
                     Text(if (model.useRadians) "RAD" else "DEG", fontSize = fontSize)
                 }
                 NumpadButton(modifier = Modifier.weight(1f), onClick = {
-                    model.pushOperator(Operator("%", text.length))
+                    model.pushOperator(OperatorType.Percent)
                 }) {
-                    Text("%", fontSize = fontSize)
+                    Text(OperatorType.Percent.getSymbol(), fontSize = fontSize)
                 }
             }
             Row(modifier = Modifier.weight(1f)) {
-                for (trigFunc in listOf("sin", "cos", "tan")) {
-                    val name = if (model.inverse) "a$trigFunc" else trigFunc
+                val trigFunctions =
+                    if (!model.inverse)
+                        listOf(
+                            SinFunction(model.useRadians),
+                            CosFunction(model.useRadians),
+                            TanFunction(model.useRadians)
+                        )
+                    else
+                        listOf(
+                            AsinFunction(model.useRadians),
+                            AcosFunction(model.useRadians),
+                            AtanFunction(model.useRadians)
+                        )
+                for (trigFunc in trigFunctions) {
                     NumpadButton(modifier = Modifier.weight(1f),
                         onClick = {
-                            model.pushName(Name(name, text.length))
-                            model.pushLeftParen()
+                            model.pushFunction(trigFunc)
                         }) {
-                        Text(name, fontSize = fontSize)
+                        Text(trigFunc.name, fontSize = fontSize)
                     }
                 }
             }
             Row(modifier = Modifier.weight(1f)) {
+                val function = if (!model.inverse) ExpFunction() else NaturalLogFunction()
                 NumpadButton(modifier = Modifier.weight(1f),
                     onClick = {
-                        model.pushName(Name(if (!model.inverse) "exp" else "ln", text.length))
-                        model.pushLeftParen()
+                        model.pushFunction(function)
                     }) {
-                    Text(if (!model.inverse) "exp" else "ln", fontSize = fontSize)
+                    Text(function.name, fontSize = fontSize)
                 }
                 NumpadButton(modifier = Modifier.weight(1f),
                     onClick = {
                         if (!model.inverse) {
                             model.pushKey(1)
                             model.pushKey(0)
-                            model.pushOperator(Operator("^", text.length))
+                            model.pushOperator(OperatorType.Power)
                         } else {
-                            model.pushName(Name("log", text.length))
+                            model.pushFunction(Log10Function())
                             model.pushLeftParen()
                         }
                     }) {
-                    Text(if (!model.inverse) "10^x" else "log", fontSize = fontSize)
+                    Text(if (!model.inverse) "10${OperatorType.Power.getSymbol()}x" else Log10Function().name, fontSize = fontSize)
                 }
                 NumpadButton(modifier = Modifier.weight(1f),
-                    onClick = { model.pushOperator(Operator("!", text.length)) }) {
+                    onClick = { model.pushOperator(OperatorType.Factorial) }) {
                     Text("!", fontSize = fontSize)
                 }
             }
             Row(modifier = Modifier.weight(1f)) {
+                val piConstant = PiConstant()
+                val eConstant = EConstant()
                 NumpadButton(modifier = Modifier.weight(1f),
-                    onClick = { model.pushName(Name("pi", text.length)) }) {
-                    Text("pi", fontSize = fontSize)
+                    onClick = { model.pushConstant(piConstant) }) {
+                    Text(piConstant.text, fontSize = fontSize)
                 }
                 NumpadButton(modifier = Modifier.weight(1f),
-                    onClick = { model.pushName(Name("e", text.length)) }) {
-                    Text("e", fontSize = fontSize)
+                    onClick = { model.pushConstant(eConstant) }) {
+                    Text(eConstant.text, fontSize = fontSize)
                 }
                 NumpadButton(modifier = Modifier.weight(1f), onClick = {
-                    model.pushOperator(Operator("^", text.length))
+                    model.pushOperator(OperatorType.Power)
                 }) {
-                    Text("^", fontSize = fontSize)
+                    Text(OperatorType.Power.getSymbol(), fontSize = fontSize)
                 }
             }
             Row(modifier = Modifier.weight(1f)) {
@@ -244,14 +273,13 @@ fun AdvancedTab(
                 NumpadButton(modifier = Modifier.weight(1f),
                     onClick = {
                         if (!model.inverse) {
-                            model.pushOperator(Operator("^", text.length))
+                            model.pushOperator(OperatorType.Power)
                             model.pushKey(2)
                         } else {
-                            model.pushName(Name("sqrt", text.length))
-                            model.pushLeftParen()
+                            model.pushFunction(SquareRootFunction())
                         }
                     }) {
-                    Text(if (!model.inverse) "x^2" else "sqrt", fontSize = fontSize)
+                    Text(if (!model.inverse) "x${OperatorType.Power.getSymbol()}2" else SquareRootFunction().name, fontSize = fontSize)
                 }
             }
         }

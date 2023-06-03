@@ -97,4 +97,12 @@ class ParserUnitTest {
         println(parser.parse())
         Assert.assertEquals(parser.parse().eval(), 0.45, 0.001)
     }
+    @Test
+    fun parseTrigOne() {
+        val lexer = Lexer("sin(e)^2+cos(e)^2")
+        println(lexer.getLexemes())
+        val parser = Parser(lexer.getLexemes())
+        println(parser.parse())
+        Assert.assertEquals(parser.parse().eval(), 1.0, 0.001)
+    }
 }
