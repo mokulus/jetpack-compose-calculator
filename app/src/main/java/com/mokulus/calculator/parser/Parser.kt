@@ -17,7 +17,7 @@ abstract class ParserException(msg: String) : Exception(msg) {}
 
 class UnexpectedTokenException(val token : Lexeme) : ParserException("Unexpected token ${token.text}")
 
-class NotEnoughTokensException() : ParserException("Unfinished expression")
+class NotEnoughTokensException : ParserException("Unfinished expression")
 
 class DomainError(msg: String) : ParserException(msg)
 
