@@ -13,109 +13,95 @@ class ParserUnitTest {
             var ret = text
             ret = ret.replace("*", OperatorType.Multiply.getSymbol())
             ret = ret.replace("/", OperatorType.Divide.getSymbol())
-            ret = ret.replace("e", EConstant().text)
-            ret = ret.replace("pi", PiConstant().text)
+            ret = ret.replace(Regex("""\be\b"""), EConstant().text)
+            ret = ret.replace(Regex("""\bpi\b"""), PiConstant().text)
             return ret
+        }
+
+        private fun assertResult(equation : String, actual : Double) {
+            println(processText(equation))
+            val lexer = Lexer(processText(equation))
+            println(lexer.getLexemes())
+            val parser = Parser(lexer.getLexemes())
+            println(parser.parse())
+            Assert.assertEquals(parser.parse().eval(), actual, 0.001)
         }
     }
     @Test
     fun parser_isCorrect() {
-        val lexer = Lexer(processText("2+(3*4)"))
-        val parser = Parser(lexer.getLexemes())
-        Assert.assertEquals(parser.parse().eval(), 14.0, 0.001)
+        assertResult("2+(3*4)", 14.0)
     }
     @Test
     fun parser_simpleMul() {
-        val lexer = Lexer(processText("3*2"))
-        println(lexer.getLexemes())
-        val parser = Parser(lexer.getLexemes())
-        println(parser.parse())
-        Assert.assertEquals(parser.parse().eval(), 6.0, 0.001)
+        assertResult("3*2", 6.0)
     }
 
     @Test
     fun parser_precedence() {
-        val lexer = Lexer(processText("2+2*2"))
-        println(lexer.getLexemes())
-        val parser = Parser(lexer.getLexemes())
-        println(parser.parse())
-        Assert.assertEquals(parser.parse().eval(), 6.0, 0.001)
+        assertResult("2+2*2", 6.0)
     }
 
     @Test
     fun parser_division() {
-        val lexer = Lexer(processText("12/3/4"))
-        println(lexer.getLexemes())
-        val parser = Parser(lexer.getLexemes())
-        println(parser.parse())
-        Assert.assertEquals(parser.parse().eval(), 1.0, 0.001)
+        assertResult("12/3/4", 1.0)
     }
 
     @Test
     fun parser_subtract() {
-        val lexer = Lexer(processText("12-(5-3)"))
-        println(lexer.getLexemes())
-        val parser = Parser(lexer.getLexemes())
-        println(parser.parse())
-        Assert.assertEquals(parser.parse().eval(), 10.0, 0.001)
+        assertResult("12-(5-3)", 10.0)
     }
 
     @Test
     fun parse_empty() {
-        val lexer = Lexer("")
-        println(lexer.getLexemes())
-        val parser = Parser(lexer.getLexemes())
-        println(parser.parse())
-        Assert.assertEquals(parser.parse().eval(), 0.0, 0.001)
+        assertResult("", 0.0)
     }
+
     @Test
     fun parse_power() {
-        val lexer = Lexer(processText("2^3"))
-        println(lexer.getLexemes())
-        val parser = Parser(lexer.getLexemes())
-        println(parser.parse())
-        Assert.assertEquals(parser.parse().eval(), 8.0, 0.001)
+        assertResult("2^3", 8.0)
     }
+
     @Test
     fun parse_power_right_assoc() {
-        val lexer = Lexer(processText("2^2^2"))
-        println(lexer.getLexemes())
-        val parser = Parser(lexer.getLexemes())
-        println(parser.parse())
-        Assert.assertEquals(parser.parse().eval(), 16.0, 0.001)
+        assertResult("2^2^2", 16.0)
     }
+
     @Test
     fun parse_subtraction_left_assoc() {
-        val lexer = Lexer(processText("3-5-5"))
-        println(lexer.getLexemes())
-        val parser = Parser(lexer.getLexemes())
-        println(parser.parse())
-        Assert.assertEquals(parser.parse().eval(), -7.0, 0.001)
+        assertResult("3-5-5", -7.0)
     }
 
     @Test
     fun parse_factorial() {
-        val lexer = Lexer(processText("1-6!"))
-        println(lexer.getLexemes())
-        val parser = Parser(lexer.getLexemes())
-        println(parser.parse())
-        Assert.assertEquals(parser.parse().eval(), -719.0, 0.001)
+        assertResult("1-6!", -719.0)
     }
 
     @Test
     fun parse_percent() {
-        val lexer = Lexer(processText("15%*3"))
-        println(lexer.getLexemes())
-        val parser = Parser(lexer.getLexemes())
-        println(parser.parse())
-        Assert.assertEquals(parser.parse().eval(), 0.45, 0.001)
+        assertResult("15%*3", 0.45)
     }
     @Test
     fun parseTrigOne() {
-        val lexer = Lexer(processText("sin(e)^2+cos(e)^2"))
-        println(lexer.getLexemes())
-        val parser = Parser(lexer.getLexemes())
-        println(parser.parse())
-        Assert.assertEquals(parser.parse().eval(), 1.0, 0.001)
+        assertResult("sin(e)^2+cos(e)^2", 1.0)
+    }
+
+    @Test
+    fun parsePiByPi() {
+        assertResult("pi/pi", 1.0)
+    }
+
+    @Test
+    fun parseMultiple1() {
+        assertResult("sqrt(36) + ln(exp(2)) - sin(pi/6)", 7.5)
+    }
+
+    @Test
+    fun parseMultiple2() {
+        assertResult("(10 * 3 - 8) / cos(0) + tan(pi/4)", 23.0)
+    }
+
+    @Test
+    fun parseMultiple3() {
+        assertResult("(asin(sqrt(2)/2) + acos(sqrt(3)/2) + atan(1)) - 2/3*pi", 0.0)
     }
 }
