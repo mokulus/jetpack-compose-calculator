@@ -1,6 +1,7 @@
 package com.mokulus.calculator
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedContent
@@ -30,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,6 +40,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mokulus.calculator.parser.EConstant
+import com.mokulus.calculator.parser.ParserException
 import com.mokulus.calculator.parser.PiConstant
 import com.mokulus.calculator.parser.functions.AcosFunction
 import com.mokulus.calculator.parser.functions.AsinFunction
@@ -118,6 +121,7 @@ fun BasicTab(
     modifier: Modifier = Modifier
 ) {
     val model = viewModel<CalculatorViewModel>()
+    val context = LocalContext.current
     Row(modifier = modifier) {
         Column(modifier = Modifier.weight(3f)) {
             for (row in listOf(7, 4, 1)) {
@@ -137,7 +141,15 @@ fun BasicTab(
                 NumpadButton(modifier = Modifier.weight(1f), onClick = { model.pushKey(0) }) {
                     Text("0", fontSize = fontSize)
                 }
-                NumpadButton(modifier = Modifier.weight(1f), onClick = { model.calculate() }) {
+                NumpadButton(modifier = Modifier.weight(1f), onClick = {
+                    try {
+                        model.calculate()
+                    } catch (e: InvalidLexeme) {
+                        Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
+                    } catch (e: ParserException) {
+                        Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
+                    }
+                }) {
                     Text("=", fontSize = fontSize)
                 }
             }

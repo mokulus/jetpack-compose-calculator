@@ -8,7 +8,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.mokulus.calculator.parser.Constant
 import com.mokulus.calculator.parser.Parser
-import com.mokulus.calculator.parser.ParserException
 import com.mokulus.calculator.parser.functions.Function
 
 class CalculatorViewModel : ViewModel() {
@@ -95,14 +94,8 @@ class CalculatorViewModel : ViewModel() {
     }
 
     fun calculate() {
-        text = try {
-            val value = Parser(Lexer(text).getLexemes(), useDegrees = !useRadians).parse().eval()
-            decimalFormat.format(value)
-        } catch (e: InvalidLexeme) {
-            text
-        } catch (e: ParserException) {
-            text
-        }
+        val value = Parser(Lexer(text).getLexemes(), useDegrees = !useRadians).parse().eval()
+        text = decimalFormat.format(value)
         lexer = Lexer(text)
     }
 
